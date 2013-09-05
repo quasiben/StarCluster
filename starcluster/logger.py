@@ -48,6 +48,16 @@ DEBUG_FORMAT = " ".join(["%(asctime)s", FILE_INFO_FORMAT])
 DEBUG_FORMAT_PID = " ".join(["%(asctime)s", "PID: %s" % str(static.PID),
                              FILE_INFO_FORMAT])
 
+import json
+import logging
+
+class StructuredMessage(object):
+    def __init__(self, message, **kwargs):
+        self.message = message
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return '%s >>> %s' % (self.message, json.dumps(self.kwargs))
 
 class ConsoleLogger(logging.StreamHandler):
 
@@ -136,7 +146,7 @@ log = get_starcluster_logger()
 console = ConsoleLogger()
 
 
-def configure_sc_logging(use_syslog=False):
+def configure_sc_logging(use_syslog=False,filename=''):
     """
     Configure logging for StarCluster *application* code
 
@@ -152,9 +162,13 @@ def configure_sc_logging(use_syslog=False):
     log.setLevel(logging.DEBUG)
     formatter = logging.Formatter(DEBUG_FORMAT_PID)
     static.create_sc_config_dirs()
-    rfh = logging.handlers.RotatingFileHandler(static.DEBUG_FILE,
+    if filename:
+        rfh = logging.FileHandler(filename)
+    else:
+        rfh = logging.handlers.RotatingFileHandler(static.DEBUG_FILE,
                                                maxBytes=1048576,
                                                backupCount=2)
+
     rfh.setLevel(logging.DEBUG)
     rfh.setFormatter(formatter)
     log.addHandler(rfh)
@@ -169,14 +183,18 @@ def configure_sc_logging(use_syslog=False):
         log.addHandler(syslog_handler)
 
 
-def configure_ssh_logging():
+def configure_ssh_logging(filename=''):
     """
     Configure ssh to log to a file for debug
     """
     l = logging.getLogger("ssh")
     l.setLevel(logging.DEBUG)
     static.create_sc_config_dirs()
-    lh = logging.handlers.RotatingFileHandler(static.SSH_DEBUG_FILE,
+    if filename:
+        lh = logging.FileHandler(filename)
+    
+    else:
+        lh = logging.handlers.RotatingFileHandler(static.SSH_DEBUG_FILE,
                                               maxBytes=1048576,
                                               backupCount=2)
     lh.setLevel(logging.DEBUG)
@@ -188,14 +206,17 @@ def configure_ssh_logging():
     l.addHandler(lh)
 
 
-def configure_boto_logging():
+def configure_boto_logging(filename=''):
     """
     Configure boto to log to a file for debug
     """
     l = logging.getLogger("boto")
     l.setLevel(logging.DEBUG)
     static.create_sc_config_dirs()
-    lh = logging.handlers.RotatingFileHandler(static.AWS_DEBUG_FILE,
+    if filename:
+        lh = logging.FileHandler(filename)
+    else:
+        lh = logging.handlers.RotatingFileHandler(static.AWS_DEBUG_FILE,
                                               maxBytes=1048576,
                                               backupCount=2)
     lh.setLevel(logging.DEBUG)
